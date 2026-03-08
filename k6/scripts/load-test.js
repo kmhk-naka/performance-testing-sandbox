@@ -20,7 +20,9 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 // --- シナリオ: GET /api/orders/{id} ---
 export function getOrder() {
     const id = Math.floor(Math.random() * 100) + 1;
-    const res = http.get(`${BASE_URL}/api/orders/${id}`);
+    const res = http.get(`${BASE_URL}/api/orders/${id}`, {
+        tags: { name: 'GET /api/orders/{id}' },
+    });
     check(res, {
         'GET /api/orders/{id} status is 200': (r) => r.status === 200,
         'GET /api/orders/{id} has id': (r) => r.status === 200 && r.json() && typeof r.json().id !== 'undefined',
@@ -35,7 +37,10 @@ export function createOrder() {
         quantity: Math.floor(Math.random() * 10) + 1,
         note: '負荷テストによる注文',
     });
-    const params = { headers: { 'Content-Type': 'application/json' } };
+    const params = {
+        headers: { 'Content-Type': 'application/json' },
+        tags: { name: 'POST /api/orders' },
+    };
     const res = http.post(`${BASE_URL}/api/orders`, payload, params);
     check(res, {
         'POST /api/orders status is 201': (r) => r.status === 201,
@@ -50,7 +55,10 @@ export function updateOrder() {
         quantity: Math.floor(Math.random() * 20) + 1,
         note: `負荷テスト更新_${Date.now()}`,
     });
-    const params = { headers: { 'Content-Type': 'application/json' } };
+    const params = {
+        headers: { 'Content-Type': 'application/json' },
+        tags: { name: 'PUT /api/orders/{id}' },
+    };
     const res = http.put(`${BASE_URL}/api/orders/${id}`, payload, params);
     check(res, {
         'PUT /api/orders/{id} status is 200': (r) => r.status === 200,
@@ -66,7 +74,10 @@ export function confirmOrder() {
         quantity: 1,
     });
     const params = { headers: { 'Content-Type': 'application/json' } };
-    const createRes = http.post(`${BASE_URL}/api/orders`, createPayload, params);
+    const createRes = http.post(`${BASE_URL}/api/orders`, createPayload, {
+        ...params,
+        tags: { name: 'POST /api/orders' },
+    });
 
     if (createRes.status !== 201) {
         return;
@@ -74,7 +85,9 @@ export function confirmOrder() {
     const orderId = JSON.parse(createRes.body).id;
 
     // Step 2: 注文詳細を取得してトークンを取得
-    const getRes = http.get(`${BASE_URL}/api/orders/${orderId}`);
+    const getRes = http.get(`${BASE_URL}/api/orders/${orderId}`, {
+        tags: { name: 'GET /api/orders/{id}' },
+    });
     if (getRes.status !== 200) {
         return;
     }
@@ -84,7 +97,10 @@ export function confirmOrder() {
     const confirmPayload = JSON.stringify({
         confirmation_token: token,
     });
-    const confirmRes = http.post(`${BASE_URL}/api/orders/${orderId}/confirm`, confirmPayload, params);
+    const confirmRes = http.post(`${BASE_URL}/api/orders/${orderId}/confirm`, confirmPayload, {
+        ...params,
+        tags: { name: 'POST /api/orders/{id}/confirm' },
+    });
     check(confirmRes, {
         'POST /api/orders/{id}/confirm status is 200': (r) => r.status === 200,
         'POST /api/orders/{id}/confirm status is confirmed': (r) => r.status === 200 && r.json() && r.json().status === 'confirmed',
