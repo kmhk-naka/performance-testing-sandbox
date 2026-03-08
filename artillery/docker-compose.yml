@@ -1,0 +1,13 @@
+services:
+  artillery:
+    image: artilleryio/artillery:latest
+    volumes:
+      - ./load-test.yml:/scripts/load-test.yml
+      - ./helpers.js:/scripts/helpers.js
+      - ./results:/results
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        /home/node/artillery/bin/run run /scripts/load-test.yml --output /results/report.json && \
+        /home/node/artillery/bin/run report /results/report.json --output /results/report.html
+    network_mode: "host"

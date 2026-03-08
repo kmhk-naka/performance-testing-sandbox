@@ -1,0 +1,89 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - duration: 30
+      arrivalRate: 1
+      rampTo: 10
+      name: "ランプアップ: 1→10 users/sec"
+    - duration: 60
+      arrivalRate: 10
+      rampTo: 50
+      name: "ランプアップ: 10→50 users/sec"
+    - duration: 120
+      arrivalRate: 50
+      name: "安定: 50 users/sec"
+    - duration: 30
+      arrivalRate: 50
+      rampTo: 1
+      name: "クールダウン: 50→1 users/sec"
+  processor: "/scripts/helpers.js"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  # --- シナリオ: GET /api/orders/{id} ---
+  - name: "Get Order"
+    weight: 3
+    flow:
+      - function: "generateRandomId"
+      - get:
+          url: "/api/orders/{{ orderId }}"
+          expect:
+            - statusCode: 200
+
+  # --- シナリオ: POST /api/orders（ステートレス） ---
+  - name: "Create Order"
+    weight: 2
+    flow:
+      - function: "generateOrderPayload"
+      - post:
+          url: "/api/orders"
+          json:
+            product_name: "{{ productName }}"
+            quantity: "{{ quantity }}"
+            note: "負荷テストによる注文"
+          expect:
+            - statusCode: 201
+
+  # --- シナリオ: PUT /api/orders/{id} ---
+  - name: "Update Order"
+    weight: 2
+    flow:
+      - function: "generateRandomId"
+      - function: "generateUpdatePayload"
+      - put:
+          url: "/api/orders/{{ orderId }}"
+          json:
+            quantity: "{{ quantity }}"
+            note: "{{ note }}"
+          expect:
+            - statusCode: 200
+
+  # --- シナリオ: POST /api/orders/{id}/confirm（ステートフル） ---
+  - name: "Confirm Order"
+    weight: 1
+    flow:
+      # Step 1: 注文を作成
+      - function: "generateOrderPayload"
+      - post:
+          url: "/api/orders"
+          json:
+            product_name: "{{ productName }}"
+            quantity: 1
+          capture:
+            - json: "$.id"
+              as: "newOrderId"
+      # Step 2: トークンを取得
+      - get:
+          url: "/api/orders/{{ newOrderId }}"
+          capture:
+            - json: "$.confirmation_token"
+              as: "token"
+      # Step 3: 注文を確定
+      - post:
+          url: "/api/orders/{{ newOrderId }}/confirm"
+          json:
+            confirmation_token: "{{ token }}"
+          expect:
+            - statusCode: 200

@@ -1,0 +1,14 @@
+services:
+  k6:
+    image: grafana/k6:latest
+    volumes:
+      - ./scripts:/scripts
+      - ./results:/results
+    environment:
+      - K6_WEB_DASHBOARD=true
+      - K6_WEB_DASHBOARD_EXPORT=/results/report.html
+      - K6_WEB_DASHBOARD_HOST=0.0.0.0
+    ports:
+      - "5665:5665"
+    command: run /scripts/load-test.js
+    network_mode: "host"
