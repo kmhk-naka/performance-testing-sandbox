@@ -23,7 +23,7 @@ cd .. && docker compose up -d
 ```bash
 # 負荷試験を実行（完了後に results/report.html が出力される）
 # --service-ports を付けることで、Webダッシュボード(5665番ポート)にホストからアクセス可能になります。
-docker compose run --rm --service-ports k6
+./run.sh
 ```
 
 ## 結果の確認

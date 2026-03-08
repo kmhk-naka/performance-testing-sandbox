@@ -1,6 +1,7 @@
 services:
   k6:
     image: grafana/k6:latest
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./scripts:/scripts
       - ./results:/results

@@ -55,7 +55,7 @@ bash ./test_api.sh
 
 ```bash
 # k6
-cd k6 && docker compose run --rm k6 && cd ..
+cd k6 && ./run.sh && cd ..
 
 # Locust（Web UI: http://localhost:8089）
 cd locust && docker compose up -d && cd ..
