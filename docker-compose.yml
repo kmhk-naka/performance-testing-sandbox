@@ -38,8 +38,8 @@ services:
   # --- 監視スタック ---
   mysql-exporter:
     image: prom/mysqld-exporter:latest
-    environment:
-      - DATA_SOURCE_NAME=root:rootpassword@(mysql:3306)/
+    volumes:
+      - ./monitoring/mysql-exporter/.my.cnf:/.my.cnf
     depends_on:
       mysql:
         condition: service_healthy
