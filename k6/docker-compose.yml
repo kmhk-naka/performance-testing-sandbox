@@ -13,3 +13,26 @@ services:
       - "5665:5665"
     command: run /scripts/load-test.js
     network_mode: "host"
+
+  k6-sql:
+    build:
+      context: .
+      dockerfile: Dockerfile.xk6
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    volumes:
+      - ./scripts:/scripts
+      - ./results:/results
+    environment:
+      - K6_WEB_DASHBOARD=true
+      - K6_WEB_DASHBOARD_EXPORT=/results/report-sql.html
+      - K6_WEB_DASHBOARD_HOST=0.0.0.0
+    ports:
+      - "5666:5665"
+    command: run /scripts/sql-test.js
+    networks:
+      - perf-net
+
+networks:
+  perf-net:
+    external: true
+    name: perf-net
