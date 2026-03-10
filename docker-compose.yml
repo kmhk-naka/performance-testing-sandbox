@@ -38,6 +38,15 @@ services:
   # --- 監視スタック ---
   mysql-exporter:
     image: prom/mysqld-exporter:latest
+    command:
+      - "--collect.info_schema.innodb_metrics"
+      - "--collect.info_schema.processlist"
+      - "--collect.info_schema.tables"
+      - "--collect.perf_schema.eventsstatements"
+      - "--collect.perf_schema.indexiowaits"
+      - "--collect.perf_schema.tableiowaits"
+      - "--collect.perf_schema.tablelocks"
+      - "--collect.engine_innodb_status"
     volumes:
       - ./monitoring/mysql-exporter/.my.cnf:/.my.cnf
     depends_on:
@@ -45,6 +54,24 @@ services:
         condition: service_healthy
     ports:
       - "9104:9104"
+    networks:
+      - perf-net
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "9100:9100"
     networks:
       - perf-net
 
