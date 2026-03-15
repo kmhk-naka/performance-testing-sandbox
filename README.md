@@ -3,7 +3,7 @@
 負荷試験ツールを2つの軸で比較するサンドボックス環境。
 
 - API負荷試験: `k6` / `Locust` / `Gatling` / `Artillery`
-- DB直接負荷試験: `sysbench`
+- DB直接負荷試験: `k6-sql` / `sysbench`
 
 ## 構成
 
@@ -23,31 +23,26 @@ performance-testing-sandbox/
 ## 前提条件
 
 - Docker / Docker Compose が使用可能
+- GNU Make が使用可能
 - Ubuntu 24.04
 
 ## クイックスタート
 
 ### 1. シナリオ別の基盤起動
 
-#### API負荷試験向け（API + MySQL + 監視）
+#### API系ツール向け（k6 / Locust / Gatling / Artillery）
 
 ```bash
-docker compose --profile api --profile monitoring up -d
+make api-tools-up
 ```
 
-#### DB直接負荷試験向け（MySQL + 監視、APIなし）
+#### DB直接負荷ツール向け（k6-sql / sysbench）
 
 ```bash
-docker compose --profile db --profile monitoring up -d
+make db-tools-up
 ```
 
-#### 監視基盤のみ確認したい場合（MySQL + 監視、APIなし）
-
-```bash
-docker compose --profile monitoring up -d
-```
-
-> このリポジトリのルート `docker-compose.yml` はプロファイル前提のため、`docker compose up -d` 単体ではサービスは起動しません。
+> 直接 `docker compose` を叩く代わりに `Makefile` ターゲットを使う運用を推奨。
 
 シナリオごとの起動サービス:
 | サービス | API負荷試験 | DB直接負荷試験 | URL |
@@ -60,13 +55,13 @@ docker compose --profile monitoring up -d
 ### 2. ヘルスチェック（API負荷試験シナリオ）
 
 ```bash
-curl http://localhost:8080/health
+make health-api
 ```
 
 もしくは以下のシェルスクリプトですべてのAPIのヘルスチェックを実行できる。
 
 ```bash
-bash ./test_api.sh
+make test-api
 ```
 
 ### 3. 負荷試験の実行
@@ -75,23 +70,38 @@ bash ./test_api.sh
 
 ```bash
 # k6
-cd k6 && ./run.sh && cd ..
+make k6-up
+make k6
+make k6-down
 
 # Locust（Web UI: http://localhost:8089）
-cd locust && docker compose up -d && cd ..
+make locust-up
+# ...UIで実行...
+make locust-down
 
 # Gatling
-cd gatling && docker compose run --rm gatling && cd ..
+make gatling-up
+make gatling
+make gatling-down
 
 # Artillery
-cd artillery && docker compose run --rm artillery && cd ..
+make artillery-up
+make artillery
+make artillery-down
 ```
 
 #### DB直接負荷試験ツール
 
 ```bash
-# sysbench（MySQL 直接負荷）
-cd sysbench && ./run.sh all && cd ..
+# k6-sql（MySQL 直接）
+make k6-sql-up
+make k6-sql
+make k6-sql-down
+
+# sysbench（MySQL 直接）
+make sysbench-up
+make sysbench
+make sysbench-down
 ```
 
 各ツールの詳細は対応するディレクトリの `README.md` を参照。
@@ -103,15 +113,17 @@ cd sysbench && ./run.sh all && cd ..
 ### 5. 後片付け
 
 ```bash
-# Locustを停止(Locust起動時のみ)
-cd locust && docker compose down && cd ..
-```
-```bash
-# 共通基盤を停止
-docker compose down
+# 共通基盤を停止（現在起動中のシナリオ）
+make down
 
 # データを含めて完全にリセット
-docker compose down -v
+make down-v
+```
+
+### 6. ターゲット一覧の確認
+
+```bash
+make help
 ```
 
 ## APIエンドポイント
@@ -128,5 +140,5 @@ docker compose down -v
 
 | 軸 | ツール | 対象 | 前提基盤 |
 |----|--------|------|----------|
-| API負荷試験 | k6 / Locust / Gatling / Artillery | APIサーバ + その背後のDB | `--profile api`（必要に応じて `--profile monitoring`） |
-| DB直接負荷試験 | sysbench | MySQLへ直接SQL | `--profile db`（必要に応じて `--profile monitoring`） |
+| API負荷試験 | k6 / Locust / Gatling / Artillery | APIサーバ + その背後のDB | `make api-tools-up` |
+| DB直接負荷試験 | k6-sql / sysbench | MySQLへ直接SQL | `make db-tools-up` |

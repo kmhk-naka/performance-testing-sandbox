@@ -12,17 +12,23 @@ Artillery は YAML + JavaScript で負荷テストシナリオを記述するOSS
 
 ## 前提条件
 
-ルートディレクトリでAPI負荷試験向け基盤が起動済みであること:
+ルートディレクトリでAPI負荷試験向け基盤が起動済みであること（推奨）:
 
 ```bash
-cd .. && docker compose --profile api --profile monitoring up -d
+make -C .. artillery-up
 ```
 
 ## 実行方法
 
 ```bash
+# ルートから実行する場合（推奨）
+make -C .. artillery
+
 # 負荷試験を実行 + HTMLレポートを生成
 docker compose run --rm artillery
+
+# 終了
+make -C .. artillery-down
 ```
 
 ## 結果の確認

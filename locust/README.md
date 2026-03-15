@@ -14,15 +14,18 @@ Locust は Python で負荷テストシナリオを記述するOSSツール。
 
 ## 前提条件
 
-ルートディレクトリでAPI負荷試験向け基盤が起動済みであること:
+ルートディレクトリでAPI負荷試験向け基盤が起動済みであること（推奨）:
 
 ```bash
-cd .. && docker compose --profile api --profile monitoring up -d
+make -C .. locust-up
 ```
 
 ## 実行方法
 
 ```bash
+# ルートから実行する場合（推奨）
+make -C .. locust-up
+
 # Locust Web UIを起動
 docker compose up -d
 
@@ -34,6 +37,9 @@ docker compose up -d
 
 # 停止
 docker compose down
+
+# ルートから停止する場合（推奨）
+make -C .. locust-down
 ```
 
 ## ファイル構成

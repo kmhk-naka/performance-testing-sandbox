@@ -7,15 +7,18 @@
 
 ## 前提条件
 
-ルートディレクトリでDB直接負荷試験向け基盤（MySQL + 監視、APIなし）が起動済みであること:
+ルートディレクトリでDB直接負荷試験向け基盤（MySQL + 監視、APIなし）が起動済みであること（推奨）:
 
 ```bash
-cd .. && docker compose --profile db --profile monitoring up -d
+make -C .. sysbench-up
 ```
 
 ## 実行方法
 
 ```bash
+# ルートから実行する場合（推奨）
+make -C .. sysbench
+
 # 1) テストデータ作成 + 2) 負荷試験実行
 ./run.sh all
 
@@ -27,6 +30,17 @@ cd .. && docker compose --profile db --profile monitoring up -d
 
 # テストデータ削除
 ./run.sh cleanup
+
+# 終了
+make -C .. sysbench-down
+```
+
+`make` でモードを切り替える場合:
+
+```bash
+make -C .. sysbench-prepare
+make -C .. sysbench-run ARGS='--rand-type=uniform'
+make -C .. sysbench-cleanup
 ```
 
 追加の `sysbench` オプションは第2引数以降で渡せる:
