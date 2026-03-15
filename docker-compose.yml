@@ -1,6 +1,8 @@
 services:
   api-server:
     build: ./api-server
+    profiles:
+      - api
     ports:
       - "8080:8080"
     depends_on:
@@ -17,6 +19,10 @@ services:
 
   mysql:
     image: mysql:8.0
+    profiles:
+      - api
+      - db
+      - monitoring
     ports:
       - "3306:3306"
     environment:
@@ -38,6 +44,8 @@ services:
   # --- 監視スタック ---
   mysql-exporter:
     image: prom/mysqld-exporter:latest
+    profiles:
+      - monitoring
     command:
       - "--collect.info_schema.innodb_metrics"
       - "--collect.info_schema.processlist"
@@ -59,6 +67,8 @@ services:
 
   node-exporter:
     image: prom/node-exporter:latest
+    profiles:
+      - monitoring
     container_name: node-exporter
     restart: unless-stopped
     volumes:
@@ -77,6 +87,8 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
+    profiles:
+      - monitoring
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -88,6 +100,8 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    profiles:
+      - monitoring
     ports:
       - "3000:3000"
     environment:

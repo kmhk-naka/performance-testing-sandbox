@@ -14,10 +14,10 @@ Gatling は Scala/Java で負荷テストシナリオを記述するOSSツール
 
 ## 前提条件
 
-ルートディレクトリで共通基盤が起動済みであること:
+ルートディレクトリでAPI負荷試験向け基盤が起動済みであること:
 
 ```bash
-cd .. && docker compose up -d
+cd .. && docker compose --profile api --profile monitoring up -d
 ```
 
 ## 実行方法

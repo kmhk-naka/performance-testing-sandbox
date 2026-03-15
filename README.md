@@ -1,19 +1,23 @@
 # 負荷試験ツール比較サンドボックス
 
-負荷試験ツール（k6、Locust、Gatling、Artillery）を同一のAPIサーバに対して実行し、各ツールの特性を比較検証するためのサンドボックス環境。
+負荷試験ツールを2つの軸で比較するサンドボックス環境。
+
+- API負荷試験: `k6` / `Locust` / `Gatling` / `Artillery`
+- DB直接負荷試験: `sysbench`
 
 ## 構成
 
 ```
 performance-testing-sandbox/
-├── docker-compose.yml          # 共通基盤（API + MySQL + 監視）
+├── docker-compose.yml          # 基盤プロファイル（api / db / monitoring）
 ├── api-server/                 # Go REST APIサーバ
 ├── mysql/                      # MySQL初期化SQL
 ├── monitoring/                 # Prometheus + Grafana + MySQL Exporter
 ├── k6/                         # Grafana k6 負荷試験
 ├── locust/                     # Locust 負荷試験
 ├── gatling/                    # Gatling 負荷試験
-└── artillery/                  # Artillery 負荷試験
+├── artillery/                  # Artillery 負荷試験
+└── sysbench/                   # sysbench MySQL負荷試験
 ```
 
 ## 前提条件
@@ -23,21 +27,37 @@ performance-testing-sandbox/
 
 ## クイックスタート
 
-### 1. 共通基盤の起動
+### 1. シナリオ別の基盤起動
+
+#### API負荷試験向け（API + MySQL + 監視）
 
 ```bash
-docker compose up -d
+docker compose --profile api --profile monitoring up -d
 ```
 
-以下のサービスが起動します：
-| サービス | URL | 説明 |
-|----------|-----|------|
-| API Server | http://localhost:8080 | Go REST API |
-| MySQL | localhost:3306 | データベース |
-| Grafana | http://localhost:3000 | MySQL負荷ダッシュボード（admin/admin） |
-| Prometheus | http://localhost:9090 | メトリクス収集 |
+#### DB直接負荷試験向け（MySQL + 監視、APIなし）
 
-### 2. ヘルスチェック
+```bash
+docker compose --profile db --profile monitoring up -d
+```
+
+#### 監視基盤のみ確認したい場合（MySQL + 監視、APIなし）
+
+```bash
+docker compose --profile monitoring up -d
+```
+
+> このリポジトリのルート `docker-compose.yml` はプロファイル前提のため、`docker compose up -d` 単体ではサービスは起動しません。
+
+シナリオごとの起動サービス:
+| サービス | API負荷試験 | DB直接負荷試験 | URL |
+|----------|-------------|----------------|-----|
+| API Server | ✅ | - | http://localhost:8080 |
+| MySQL | ✅ | ✅ | localhost:3306 |
+| Grafana | ✅ | ✅ | http://localhost:3000 |
+| Prometheus | ✅ | ✅ | http://localhost:9090 |
+
+### 2. ヘルスチェック（API負荷試験シナリオ）
 
 ```bash
 curl http://localhost:8080/health
@@ -51,7 +71,7 @@ bash ./test_api.sh
 
 ### 3. 負荷試験の実行
 
-各ツールのディレクトリに移動して実行：
+#### API負荷試験ツール
 
 ```bash
 # k6
@@ -65,6 +85,13 @@ cd gatling && docker compose run --rm gatling && cd ..
 
 # Artillery
 cd artillery && docker compose run --rm artillery && cd ..
+```
+
+#### DB直接負荷試験ツール
+
+```bash
+# sysbench（MySQL 直接負荷）
+cd sysbench && ./run.sh all && cd ..
 ```
 
 各ツールの詳細は対応するディレクトリの `README.md` を参照。
@@ -97,10 +124,9 @@ docker compose down -v
 | `POST` | `/api/orders/{id}/confirm` | 注文を確定（ステートフル） |
 | `GET` | `/health` | ヘルスチェック |
 
-## 比較観点
+## 比較軸
 
-| 項目 | k6 | Locust | Gatling | Artillery |
-|------|-----|--------|---------|-----------|
-| スクリプト言語 | JavaScript | Python | Scala | YAML + JS |
-| 可視化 | Webダッシュボード + HTMLレポート | Web UI（リアルタイム） | 自動生成HTMLレポート | HTMLレポート |
-| ランプアップ | ✅ stages | ✅ spawn-rate | ✅ rampUsers | ✅ rampTo |
+| 軸 | ツール | 対象 | 前提基盤 |
+|----|--------|------|----------|
+| API負荷試験 | k6 / Locust / Gatling / Artillery | APIサーバ + その背後のDB | `--profile api`（必要に応じて `--profile monitoring`） |
+| DB直接負荷試験 | sysbench | MySQLへ直接SQL | `--profile db`（必要に応じて `--profile monitoring`） |

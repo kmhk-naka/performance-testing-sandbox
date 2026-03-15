@@ -1,0 +1,10 @@
+services:
+  sysbench:
+    build: .
+    networks:
+      - perf-net
+
+networks:
+  perf-net:
+    external: true
+    name: perf-net
